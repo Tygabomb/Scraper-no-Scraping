@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
 // Requiring our Comment and Article models
-var Comment = require("../models/Comment.js");
-var Article = require("../models/Article.js");
+var Comment = require("../models/comments.js");
+var Article = require("../models/article.js");
 
 //scraping library
 var cheerio = require("cheerio");
