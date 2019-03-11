@@ -1,7 +1,7 @@
 <main class="mdl-layout__content">
     <section class="mdl-grid article_posts">
 
-        {{#each articles}}
+        {{#each Article}}
 
         <div class="wide-card mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
           <div class="mdl-card__title">
@@ -38,7 +38,7 @@
                   <input class="mdl-textfield__input comment-input" type="text">
                   <label class="mdl-textfield__label" for="comment-input">say something...</label>
                 </div>
-                <button class="mdl-button mdl-js-button mdl-button--icon addComment" data-id="{{this._id}}">
+                <button class="mdl-button mdl-js-button mdl-button--icon addComment" data-id="{{this.comments}}">
                             <i class="material-icons grey">add</i>
                 </button>
 
