@@ -1,12 +1,12 @@
 //create article model for mongoose
 
-var mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 //this is a schema object from mongoose
-var Schema=mongoose.Schema;
+const Schema = mongoose.Schema;
 
 //create article schema
-var ArticleSchema = new Schema({
+const ArticleSchema = new Schema({
     title:{
         type:String,
         required: true
@@ -23,13 +23,13 @@ var ArticleSchema = new Schema({
     },
     comments:[{
         type: Schema.Types.ObjectId,
-        ref: "comment"   
+        ref: "comments"   
     }]
 
 });
 
 //create a model from ArticleSchema
 //this will creatt the collection in mongo
-var Article = mongoose.model("article", ArticleSchema);
+var Article = mongoose.model("articles", ArticleSchema);
 
 module.exports = Article;

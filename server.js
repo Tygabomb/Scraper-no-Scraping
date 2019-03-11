@@ -1,9 +1,19 @@
 // Dependencies
-const express = require("express"),
-expHandlebars = require('express-handlebars'),
-mongoose = require('mongoose'),
-morgan = require('morgan');
+    
+const express = require("express");
+const exphbs = require("express-handlebars");
 
+const routes = require('./controller/routes.js')
+const logger = require("morgan");
+
+const mongoose = require("mongoose");
+
+// Scraping tools 
+// var axios = require("axios");
+// var cheerio = require("cheerio");
+
+// Require all models
+// var db = require("./models");
 
 // Initialize Express
 var app = express();
@@ -11,11 +21,11 @@ var PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
+app.use(logger("dev"));
 
 // Handlebars
 
-app.engine("handlebars", expHandlebars({defaultLayout: "main"}));
+app.engine("handlebars", exphbs({defaultLayout: "main"}));
 app.set("view engine", "handlebars");
 
 
@@ -46,12 +56,6 @@ mongoose.connect(
 // db.once("open", function() {
 //   console.log("Mongoose connection successful.");
 // });
-
-//Routes
-//=================
-var routes = require("./controller/routes.js");
-app.use("/",routes);
-
 
 app.listen(PORT, () => 
     console.log("App running on " + PORT + "🙈")

@@ -1,11 +1,17 @@
+
+const cheerio = require('cheerio'),
+axios = require('axios'),
+db = require("../Models");
+
+
 var express = require("express");
 var router = express.Router();
 // Requiring our Comment and Article models
 var Comments = require("../models/comments.js");
-var article = require("../models/article.js");
+var Article = require("../models/articles.js");
 
 //scraping library
-var cheerio = require("cheerio");
+
 var request = require("request");
 
 //html routes
@@ -13,7 +19,7 @@ var request = require("request");
 
 router.get("/",function(req,res){
 
-  article.find({})
+  Article.find({})
   .populate("comments")
   // now, execute our query
   .exec(function(error, doc) {
@@ -23,8 +29,8 @@ router.get("/",function(req,res){
     }
     // Otherwise, send the doc to the browser as a json object
     else {
-      console.log("all article with comments: "+ doc);
-      res.render("index",{articles: doc});
+      console.log("all articles with comments: "+ doc);
+      res.render("index",{Article: doc});
     }
   });
 
@@ -37,9 +43,10 @@ router.get("/",function(req,res){
 
 //api routes
 // A GET request to scrape the echojs website
-router.get("/scrape", function(req, res) {
+router.get("/scrape", (req, res) => {
+
     // First, we grab the body of the html with request
-    request("http://www.npr.org/sections/world/", function(error, response, html) {
+    axios.get("http://www.npr.org/sections/world/").then(error, response, html => {
         
         
           var $ = cheerio.load(html);
@@ -62,11 +69,11 @@ router.get("/scrape", function(req, res) {
             //console.log("image linke:" + $(element).children(".item-image").children(".imagewrap").children("a").children("img"));
             
 
-            article.findOne({title:result.title},function(err,data){
+            Article.findOne({title:result.title},function(err,data){
                 //console.log("find article "+data);
                 if (!data)
                 {
-                    var entry = new article(result);
+                    var entry = new Article(result);
                     
                           // Now, save that entry to the db
                           entry.save(function(err, doc) {
@@ -108,11 +115,11 @@ router.get("/scrape", function(req, res) {
                 //console.log("image linke:" + $(element).children(".item-image").children(".imagewrap").children("a").children("img"));
                 //console.log("curr result: "+ JSON.stringify(result));
 
-                article.findOne({title:result.title},function(err,data){
+                Article.findOne({title:result.title},function(err,data){
                     //console.log("find article "+data);
                     if (!data)
                     {
-                        var entry = new article(result);
+                        var entry = new Article(result);
                         
                               // Now, save that entry to the db
                               entry.save(function(err, doc) {
@@ -138,35 +145,49 @@ router.get("/scrape", function(req, res) {
         // Log the results once you've looped through each of the elements found with cheerio
        // console.log(results);
         //console.log("num articles: " + results.length);
-        res.redirect("/");
+        res.redirect("/articles");
       });
     // Tell the browser that we finished scraping the text
     //res.send("Scrape Complete");
     
   });
-
-
-  router.get("/article/:id", function(req, res) {
-    // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-    article.findOne({ "_id": req.params.id })
-    // ..and populate all of the notes associated with it
-    .populate("comments")
-    // now, execute our query
-    .exec(function(error, doc) {
-      // Log any errors
-      if (error) {
-        console.log(error);
-      }
-      // Otherwise, send the doc to the browser as a json object
-      else {
-        res.json(doc);
-      }
-    });
-  });
   
-  router.get("/article", function(req, res) {
+  router.get("/articles/:id", function(req, res) {
+    db.Article.findOne({
+            _id: req.params.id
+        })
+        .populate("comment")
+        .then(dbArticle => {
+            console.log([dbArticle])
+            res.render('articleComments', dbArticle)
+            // res.json(dbArticle)
+        })
+        .catch(err => {
+            res.json(err);
+        });
+});
+
+  // router.get("/articles/:id", (req, res) => {
+  //   // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
+  //   db.Article.findOne({ "_id": req.params.id })
+  //   // ..and populate all of the notes associated with it
+  //   .populate("comments")
+  //   // now, execute our query
+  //   .exec(function(error, doc) {
+  //     // Log any errors
+  //     if (error) {
+  //       console.log(error);
+  //     }
+  //     // Otherwise, send the doc to the browser as a json object
+  //     else {
+  //       res.json(doc);
+  //     }
+  //   });
+  // });
+  
+  router.get("/articles", (req, res) => {
     // Grab every doc in the Article array
-    article.find({}, function(error, doc) {
+    Article.find({}, (error, doc) => {
       // Log any errors
       if (error) {
         console.log(error);
@@ -179,32 +200,52 @@ router.get("/scrape", function(req, res) {
   });
 
   // Create a new comment 
-router.post("/article/:id", function(req, res) {
-    // Create a new note and pass the req.body to the entry
-    var newComment = new Comments(req.body);
-  
-    // And save the new comment the db
-    newComment.save(function(error, doc) {
-        if (error) {
-            console.log(error);
-          }
-          // Otherwise
-          else {
-            // Use the article id to find and update it's note
-            article.findOneAndUpdate({ "_id": req.params.id }, { $push:{"comments": doc._id }},{new:true},function(err,doc){
-                if (err)
-                    {
-                        console.log("add comment to article: "+ err);
-                    }
-                else{
-                    res.redirect("/");
-                }
-            
+
+  router.post("/articles/:id", (req, res) => {
+    db.Comment.create(req.body)
+        .then(dbComment => {
+            return db.Article.findOneAndUpdate({
+                _id: req.params.id
+            }, {
+                comment: dbComment._id
+            }, {
+                new: true
             });
-          }
+        })
+        .then(dbArticle => {
+            res.json(dbArticle);
+        })
+        .catch(err => {
+            res.json(err);
+        });
+});
+
+// router.post("/articles/:id", function(req, res) {
+//     // Create a new note and pass the req.body to the entry
+//     var newComment = new Comments(req.body);
+  
+//     // And save the new comment the db
+//     newComment.save(function(error, doc) {
+//         if (error) {
+//             console.log(error);
+//           }
+//           // Otherwise
+//           else {
+//             // Use the article id to find and update it's note
+//             Article.findOneAndUpdate({ "_id": req.params.id }, { $push:{"comments": doc._id }},{new:true},function(err,doc){
+//                 if (err)
+//                     {
+//                         console.log("add comment to article: "+ err);
+//                     }
+//                 else{
+//                     res.redirect("/");
+//                 }
+            
+//             });
+//           }
       
-    });
-  });
+//     });
+//   });
   
 
-  module.exports=router;
+  module.exports = router;
