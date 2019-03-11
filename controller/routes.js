@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
 // Requiring our Comment and Article models
-var Comment = require("../models/comments.js");
-var Article = require("../models/article.js");
+var Comments = require("../models/comments.js");
+var article = require("../models/article.js");
 
 //scraping library
 var cheerio = require("cheerio");
@@ -13,7 +13,7 @@ var request = require("request");
 
 router.get("/",function(req,res){
 
-  Article.find({})
+  article.find({})
   .populate("comments")
   // now, execute our query
   .exec(function(error, doc) {
@@ -62,11 +62,11 @@ router.get("/scrape", function(req, res) {
             //console.log("image linke:" + $(element).children(".item-image").children(".imagewrap").children("a").children("img"));
             
 
-            Article.findOne({title:result.title},function(err,data){
+            article.findOne({title:result.title},function(err,data){
                 //console.log("find article "+data);
                 if (!data)
                 {
-                    var entry = new Article(result);
+                    var entry = new article(result);
                     
                           // Now, save that entry to the db
                           entry.save(function(err, doc) {
@@ -108,11 +108,11 @@ router.get("/scrape", function(req, res) {
                 //console.log("image linke:" + $(element).children(".item-image").children(".imagewrap").children("a").children("img"));
                 //console.log("curr result: "+ JSON.stringify(result));
 
-                Article.findOne({title:result.title},function(err,data){
+                article.findOne({title:result.title},function(err,data){
                     //console.log("find article "+data);
                     if (!data)
                     {
-                        var entry = new Article(result);
+                        var entry = new article(result);
                         
                               // Now, save that entry to the db
                               entry.save(function(err, doc) {
@@ -148,7 +148,7 @@ router.get("/scrape", function(req, res) {
 
   router.get("/article/:id", function(req, res) {
     // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-    Article.findOne({ "_id": req.params.id })
+    article.findOne({ "_id": req.params.id })
     // ..and populate all of the notes associated with it
     .populate("comments")
     // now, execute our query
@@ -164,9 +164,9 @@ router.get("/scrape", function(req, res) {
     });
   });
   
-  router.get("/articles", function(req, res) {
-    // Grab every doc in the Articles array
-    Article.find({}, function(error, doc) {
+  router.get("/article", function(req, res) {
+    // Grab every doc in the Article array
+    article.find({}, function(error, doc) {
       // Log any errors
       if (error) {
         console.log(error);
@@ -181,7 +181,7 @@ router.get("/scrape", function(req, res) {
   // Create a new comment 
 router.post("/article/:id", function(req, res) {
     // Create a new note and pass the req.body to the entry
-    var newComment = new Comment(req.body);
+    var newComment = new Comments(req.body);
   
     // And save the new comment the db
     newComment.save(function(error, doc) {
@@ -191,7 +191,7 @@ router.post("/article/:id", function(req, res) {
           // Otherwise
           else {
             // Use the article id to find and update it's note
-            Article.findOneAndUpdate({ "_id": req.params.id }, { $push:{"comments": doc._id }},{new:true},function(err,doc){
+            article.findOneAndUpdate({ "_id": req.params.id }, { $push:{"comments": doc._id }},{new:true},function(err,doc){
                 if (err)
                     {
                         console.log("add comment to article: "+ err);
