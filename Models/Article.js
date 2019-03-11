@@ -23,13 +23,13 @@ const ArticleSchema = new Schema({
     },
     comments:[{
         type: Schema.Types.ObjectId,
-        ref: "Comments"   
+        ref: "Comment"   
     }]
 
 });
 
 //create a model from ArticleSchema
 //this will creatt the collection in mongo
-var Article = mongoose.model("articles", ArticleSchema);
+var Article = mongoose.model("Article", ArticleSchema);
 
 module.exports = Article;
